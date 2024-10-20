@@ -52,6 +52,7 @@ public:
   {
       delete[] this->pMem;
   }
+
   TDynamicVector& operator=(const TDynamicVector& v)
   {
       if (&v == this) return *this;
@@ -147,7 +148,7 @@ public:
   {
       if (sz != v.sz) throw invalid_argument("The sizes of the vectors don't equal");
       T result = 0;
-      for (int i = 0; i < this->sz; i++) result += this->pMem[i] + v.pMem[i];
+      for (int i = 0; i < this->sz; i++) result += this->pMem[i] * v.pMem[i];
       return result;
   }
 
@@ -168,6 +169,7 @@ public:
   {
     for (size_t i = 0; i < v.sz; i++)
       ostr << v.pMem[i] << ' '; // требуется оператор<< для типа T
+    std::cout << std::endl;
     return ostr;
   }
 };
@@ -188,9 +190,6 @@ public:
       pMem[i] = TDynamicVector<T>(sz);
   }
 
-  // конструктор преобразования типа
-  TDynamicMatrix(const TDynamicVector<TDynamicVector<T>>& v) : TDynamicVector<TDynamicVector<T>>(v) {}
-
   using TDynamicVector<TDynamicVector<T>>::size;
 
   // индексация
@@ -210,11 +209,7 @@ public:
   // сравнение
   bool operator==(const TDynamicMatrix& m) const noexcept
   {
-      if (this->sz != m.sz) return false;
-      for (int i = 0; i < this->sz; i++) {
-          if (this->pMem[i] != m.pMem[i]) return false;
-      }
-      return true;
+      return TDynamicVector<TDynamicVector<int>>::operator==(m);
   }
 
   bool operator!=(const TDynamicMatrix& m) const noexcept
@@ -226,17 +221,19 @@ public:
   TDynamicMatrix operator*(const T& val)
   {
       TDynamicMatrix result(this->sz);
-      result.pMem = result.pMem * val;
+      for (int i = 0; i < result.sz; i++) {
+          result.pMem[i] = this->pMem[i] * val;
+      }
       return result;
   }
 
   // матрично-векторные операции
   TDynamicVector<T> operator*(const TDynamicVector<T>& v)
   {
-      if (this->sz != v.sz) throw invalid_argument("The sizes of the vectors don't equal");
+      if (this->sz != v.size()) throw invalid_argument("The sizes of the vectors don't equal");
       TDynamicVector<T> result(sz);
-      for (int i = 0; i < result.sz; i++) {
-          result[i] = pMem[i] * v;
+      for (int i = 0; i < result.size(); i++) {
+          result[i] = this->pMem[i] * v;
       }
       return result;
   }
@@ -244,7 +241,7 @@ public:
   // матрично-матричные операции
   TDynamicMatrix operator+(const TDynamicMatrix& m)
   {
-      if (this->sz != v.sz) throw invalid_argument("The sizes of the matrix don't equal");
+      if (this->sz != m.sz) throw invalid_argument("The sizes of the matrix don't equal");
       TDynamicMatrix<T> result(this->sz);
       for (int i = 0; i < result.sz; i++) {
           result.pMem[i] = this->pMem[i] + m.pMem[i];
@@ -253,17 +250,16 @@ public:
   }
   TDynamicMatrix operator-(const TDynamicMatrix& m)
   {
-      if (this->sz != v.sz) throw invalid_argument("The sizes of the matrix don't equal");
+      if (this->sz != m.sz) throw invalid_argument("The sizes of the matrix don't equal");
       TDynamicMatrix<T> result(this->sz);
-      //for (int i = 0; i < result.sz; i++) {
-      //    result.pMem[i] = this->pMem[i] - m.pMem[i];
-      //}
-      result.pMem = this->pMem - m.pMem;
+      for (int i = 0; i < result.sz; i++) {
+          result.pMem[i] = this->pMem[i] - m.pMem[i];
+      }
       return result;
   }
   TDynamicMatrix operator*(const TDynamicMatrix& m)
   {
-      if (this->sz != v.sz) throw invalid_argument("The sizes of the matrix don't equal");
+      if (this->sz != m.sz) throw invalid_argument("The sizes of the matrix don't equal");
       TDynamicMatrix<T> result(this->sz);
       for (int i = 0; i < result.sz; i++) {
           for (int j = 0; j < result.sz; j++) {
@@ -277,6 +273,7 @@ public:
               }
           }
       }
+
       return result;
   }
 
@@ -290,7 +287,8 @@ public:
   friend ostream& operator<<(ostream& ostr, const TDynamicMatrix& m)
   {
       for (size_t i = 0; i < m.sz; i++)
-          ostr >> m.pMem[i];
+          ostr << m.pMem[i];
+      std::cout << std::endl;
       return ostr;
   }
 };
